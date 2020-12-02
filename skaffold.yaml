@@ -1,0 +1,30 @@
+apiVersion: skaffold/v2beta10
+kind: Config
+build:
+  artifacts:
+    - image: omdemo/matchfunction
+      context: ./matchfunction
+      docker:
+        dockerfile: Dockerfile
+  local:
+    useBuildkit: true
+deploy:
+  kubectl:
+    manifests:
+      - ./matchfunction/matchfunction.yaml
+portForward:
+  - resourceType: Service
+    resourceName: om-frontend
+    namespace: open-match
+    port: 50504
+    localPort: 50504
+  - resourceType: Service
+    resourceName: om-backend
+    namespace: open-match
+    port: 50505
+    localPort: 50505
+  - resourceType: Service
+    namespace: open-match
+    resourceName: om-redis
+    port: 6379
+    localPort: 6379

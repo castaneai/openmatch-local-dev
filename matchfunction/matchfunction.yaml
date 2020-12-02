@@ -1,0 +1,38 @@
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: omdemo
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: matchfunction
+  namespace: omdemo
+  labels:
+    component: matchfunction
+spec:
+  containers:
+    - name: matchfunction
+      image: omdemo/matchfunction:latest
+      imagePullPolicy: IfNotPresent
+      ports:
+        - name: grpc
+          containerPort: 50502
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: matchfunction
+  namespace: omdemo
+  labels:
+    component: matchfunction
+spec:
+  selector:
+    component: matchfunction
+  clusterIP: None
+  type: ClusterIP
+  ports:
+    - name: grpc
+      protocol: TCP
+      port: 50502
+---
