@@ -1,4 +1,4 @@
-module github.com/castaneai/om-demo/matchfunction
+module github.com/castaneai/omdemo/matchfunction
 
 go 1.15
 

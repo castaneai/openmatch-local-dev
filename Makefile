@@ -15,3 +15,6 @@ up-openmatch:
 	  --set open-match-customize.enabled=true \
 	  --set open-match-customize.evaluator.enabled=true \
 	  --set open-match-override.enabled=true
+
+monitor-redis:
+	kubectl exec -n open-match om-redis-master-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'

@@ -6,3 +6,10 @@
 make up-minikube
 make up-openmatch
 ```
+
+## Examples
+
+```
+go run testclient/main.go
+```
+
