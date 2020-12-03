@@ -18,3 +18,6 @@ up-openmatch:
 
 monitor-redis:
 	kubectl exec -n open-match om-redis-master-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
+
+clear-redis:
+	kubectl exec -n open-match om-redis-master-0 -- redis-cli FLUSHALL

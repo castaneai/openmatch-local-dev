@@ -7,9 +7,10 @@ make up-minikube
 make up-openmatch
 ```
 
-## Examples
+## Usage
 
-```
+```sh
+go run director/main.go
+
 go run testclient/main.go
 ```
-
