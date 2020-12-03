@@ -41,6 +41,12 @@ type matchFunctionService struct {
 }
 
 func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFunction_RunServer) error {
+	var poolNames []string
+	for _, pool := range request.Profile.Pools {
+		poolNames = append(poolNames, pool.Name)
+	}
+	log.Printf("start query pools (pools: %v)", poolNames)
+
 	poolTickets, err := matchfunction.QueryPools(stream.Context(), s.qsc, request.Profile.Pools)
 	if err != nil {
 		log.Printf("failed to query pools: %+v", err)
