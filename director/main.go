@@ -47,18 +47,22 @@ func main() {
 		log.Printf("%d matches found", len(matches))
 
 		for _, match := range matches {
-			if err := assignTickets(ctx, omBackend, match); err != nil {
-				log.Fatalf("failed to assign tickets: %+v", err)
-			}
+			log.Printf("  %s (profile: %s, tickets: %d)", match.MatchId, match.MatchProfile, len(match.Tickets))
 		}
+		log.Printf("---")
+
+		/*
+			for _, match := range matches {
+				if err := assignTickets(ctx, omBackend, match); err != nil {
+					log.Fatalf("failed to assign tickets: %+v", err)
+				}
+			}
+		*/
 	}
 }
 
-func fetchMatches(ctx context.Context, omBackend pb.BackendServiceClient, config *pb.FunctionConfig) ([]*pb.Match, error) {
-	stream, err := omBackend.FetchMatches(ctx, &pb.FetchMatchesRequest{Config: config, Profile: &pb.MatchProfile{Name: "test", Pools: []*pb.Pool{
-		{Name: "pool-A"},
-		{Name: "pool-B"},
-	}}})
+func fetchMatches(ctx context.Context, omBackend pb.BackendServiceClient, config *pb.FunctionConfig, profile *pb.MatchProfile) ([]*pb.Match, error) {
+	stream, err := omBackend.FetchMatches(ctx, &pb.FetchMatchesRequest{Config: config, Profile: profile})
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch matches: %+v", err)
 	}

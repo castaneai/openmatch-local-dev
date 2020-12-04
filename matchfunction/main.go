@@ -6,6 +6,8 @@ import (
 	"net"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"open-match.dev/open-match/pkg/matchfunction"
 
 	"google.golang.org/grpc"
@@ -45,14 +47,22 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 	for _, pool := range request.Profile.Pools {
 		poolNames = append(poolNames, pool.Name)
 	}
-	log.Printf("start query pools (pools: %v)", poolNames)
+	log.Printf("start query pools (profile: %s, pools: %v)", request.Profile.Name, poolNames)
 
 	poolTickets, err := matchfunction.QueryPools(stream.Context(), s.qsc, request.Profile.Pools)
 	if err != nil {
 		log.Printf("failed to query pools: %+v", err)
 		return err
 	}
-	matches, err := makeMatches(poolTickets)
+	if poolTicketsIsEmpty(poolTickets) {
+		log.Printf("query pools result empty (profile: %s, pools: %v)", request.Profile.Name, poolNames)
+		return nil
+	}
+	log.Printf("%d pool tickets found with profile: %s", len(poolTickets), request.Profile.Name)
+	for poolName, tickets := range poolTickets {
+		log.Printf("pool: %s, tickets: %s", poolName, spew.Sdump(tickets))
+	}
+	matches, err := makeMatches(poolTickets, request.Profile)
 	if err != nil {
 		log.Printf("failed to make matches: %+v", err)
 		return err
@@ -62,8 +72,21 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 			log.Printf("failed to send match proposal: %+v", err)
 			return err
 		}
+		log.Printf("sent match proposal: %s", spew.Sdump(match))
 	}
 	return nil
+}
+
+func poolTicketsIsEmpty(poolTickets map[string][]*pb.Ticket) bool {
+	if len(poolTickets) < 1 {
+		return true
+	}
+	for _, tickets := range poolTickets {
+		if len(tickets) > 0 {
+			return false
+		}
+	}
+	return true
 }
 
 func newQueryServiceClient(addr string) (pb.QueryServiceClient, error) {
@@ -79,10 +102,9 @@ const (
 )
 
 // Copied from https://github.com/googleforgames/open-match/blob/26d1aa236a5238b1387e91d506d21ed09f3891cc/examples/functions/golang/soloduel/mmf/matchfunction.go
-func makeMatches(poolTickets map[string][]*pb.Ticket) ([]*pb.Match, error) {
+func makeMatches(poolTickets map[string][]*pb.Ticket, profile *pb.MatchProfile) ([]*pb.Match, error) {
 	tickets := map[string]*pb.Ticket{}
-	for key, pool := range poolTickets {
-		log.Printf("pool[%s]: %d ticket(s)", key, len(pool))
+	for _, pool := range poolTickets {
 		for _, ticket := range pool {
 			tickets[ticket.GetId()] = ticket
 		}
@@ -101,7 +123,7 @@ func makeMatches(poolTickets map[string][]*pb.Ticket) ([]*pb.Match, error) {
 		if len(thisMatch) >= 2 {
 			matches = append(matches, &pb.Match{
 				MatchId:       fmt.Sprintf("profile-%s-time-%s-num-%d", matchName, t, matchNum),
-				MatchProfile:  matchName,
+				MatchProfile:  profile.Name,
 				MatchFunction: matchName,
 				Tickets:       thisMatch,
 			})

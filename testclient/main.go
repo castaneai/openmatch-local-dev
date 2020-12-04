@@ -19,13 +19,15 @@ func main() {
 	}
 
 	ctx := context.Background()
-	ticket, err := omFrontend.CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{
-		SearchFields: &pb.SearchFields{Tags: []string{"aaaaa"}},
-	}})
-	if err != nil {
-		log.Fatalf("failed to create ticket: %+v", err)
+	for i := 0; i < 2; i++ {
+		ticket, err := omFrontend.CreateTicket(ctx, &pb.CreateTicketRequest{Ticket: &pb.Ticket{
+			SearchFields: &pb.SearchFields{Tags: []string{"1vs1", "2vs2"}},
+		}})
+		if err != nil {
+			log.Fatalf("failed to create ticket: %+v", err)
+		}
+		log.Printf("ticket created: %s", spew.Sdump(ticket))
 	}
-	spew.Printf("ticket created: %+v", ticket)
 }
 
 func newOMFrontendClient(addr string) (pb.FrontendServiceClient, error) {

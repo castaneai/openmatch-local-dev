@@ -2,7 +2,7 @@ MINIKUBE_PROFILE := omdemo
 OPEN_MATCH_VERSION := 1.0.0
 
 dev:
-	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --port-forward --tail
+	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --tail
 
 up-minikube:
 	minikube start -p $(MINIKUBE_PROFILE) --cpus=3 --memory=2500mb
@@ -16,8 +16,20 @@ up-openmatch:
 	  --set open-match-customize.evaluator.enabled=true \
 	  --set open-match-override.enabled=true
 
+restart:
+	minikube stop
+	make up-minikube
+	kubectl delete namespace open-match --grace-period=0 --force
+	make up-openmatch
+
+redis-cli:
+	kubectl exec -it -n open-match om-redis-master-0 -- redis-cli
+
 monitor-redis:
 	kubectl exec -n open-match om-redis-master-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
 
 clear-redis:
 	kubectl exec -n open-match om-redis-master-0 -- redis-cli FLUSHALL
+
+log-matchfunction:
+	kubectl logs -f -n omdemo matchfunction
