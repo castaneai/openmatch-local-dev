@@ -2,7 +2,7 @@ MINIKUBE_PROFILE := omdemo
 OPEN_MATCH_VERSION := 1.0.0
 
 dev:
-	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --tail
+	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --port-forward --tail
 
 up-minikube:
 	minikube start -p $(MINIKUBE_PROFILE) --cpus=3 --memory=2500mb

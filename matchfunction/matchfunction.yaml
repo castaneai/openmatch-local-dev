@@ -31,8 +31,4 @@ spec:
     component: matchfunction
   clusterIP: None
   type: ClusterIP
-  ports:
-    - name: grpc
-      protocol: TCP
-      port: 50502
 ---

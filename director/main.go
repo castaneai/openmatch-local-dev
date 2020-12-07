@@ -31,16 +31,27 @@ func main() {
 		Port: matchFunctionPort,
 		Type: pb.FunctionConfig_GRPC,
 	}
+	profiles := []*pb.MatchProfile{
+		{Name: "1vs1", Pools: []*pb.Pool{
+			{TagPresentFilters: []*pb.TagPresentFilter{{Tag: "1vs1"}}},
+		}},
+		{Name: "2vs2", Pools: []*pb.Pool{
+			{TagPresentFilters: []*pb.TagPresentFilter{{Tag: "2vs2"}}},
+		}},
+	}
 
 	ctx := context.Background()
 
 	ticker := time.NewTicker(1 * time.Second)
 	for range ticker.C {
-		matches, err := fetchMatches(ctx, omBackend, mfConfig)
-		if err != nil {
-			log.Fatalf("failed to fetch matches: %+v", err)
+		var matches []*pb.Match
+		for _, profile := range profiles {
+			ms, err := fetchMatches(ctx, omBackend, mfConfig, profile)
+			if err != nil {
+				log.Fatalf("failed to fetch matches: %+v", err)
+			}
+			matches = append(matches, ms...)
 		}
-
 		if len(matches) < 1 {
 			continue
 		}
@@ -51,13 +62,11 @@ func main() {
 		}
 		log.Printf("---")
 
-		/*
-			for _, match := range matches {
-				if err := assignTickets(ctx, omBackend, match); err != nil {
-					log.Fatalf("failed to assign tickets: %+v", err)
-				}
+		for _, match := range matches {
+			if err := assignTickets(ctx, omBackend, match); err != nil {
+				log.Fatalf("failed to assign tickets: %+v", err)
 			}
-		*/
+		}
 	}
 }
 
