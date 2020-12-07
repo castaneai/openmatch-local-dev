@@ -2,7 +2,7 @@
 
 A Local development example for [Open Match](https://open-match.dev).
 
-![Overview](./om-demo.drawio.svg)
+![Overview](./overview.drawio.svg)
 
 ## Requirements
 
