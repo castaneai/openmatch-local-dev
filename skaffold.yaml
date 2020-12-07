@@ -23,8 +23,3 @@ portForward:
     namespace: open-match
     port: 50505
     localPort: 50505
-  - resourceType: Service
-    namespace: open-match
-    resourceName: om-redis
-    port: 6379
-    localPort: 6379
