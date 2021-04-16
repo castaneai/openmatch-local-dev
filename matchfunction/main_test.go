@@ -1,17 +1,18 @@
 package main
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"open-match.dev/open-match/pkg/pb"
-	"testing"
 )
 
 func TestMakeMatches(t *testing.T) {
 	pool := &pb.Pool{
-		Name:                "test-pool",
+		Name: "test-pool",
 	}
 	profile := &pb.MatchProfile{
-		Name:       "test-profile",
+		Name:  "test-profile",
 		Pools: []*pb.Pool{pool},
 	}
 
@@ -73,7 +74,7 @@ func TestMakeMatches(t *testing.T) {
 		poolBackfills[pool.Name] = nil
 		poolBackfills[pool.Name] = append(poolBackfills[pool.Name], matches[0].Backfill)
 
-		poolTickets = map[string][]*pb.Ticket {
+		poolTickets = map[string][]*pb.Ticket{
 			pool.Name: {
 				&pb.Ticket{Id: "ticket-2"},
 			},

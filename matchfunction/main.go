@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
-	"log"
-	"net"
 
 	"open-match.dev/open-match/pkg/matchfunction"
 
@@ -18,14 +19,14 @@ import (
 
 const (
 	playersPerMatch = 3
-	openSlotsKey = "openSlots"
+	openSlotsKey    = "openSlots"
 )
 
 func main() {
 	// A query service is in open-match core namespace
 	// see https://github.com/googleforgames/open-match/blob/26d1aa236a5238b1387e91d506d21ed09f3891cc/install/helm/open-match/values.yaml#L54
 	// see also https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records
-	qsAddr := "om-query.open-match.svc.cluster.local.:50503"
+	qsAddr := "openmatch-open-match-query.open-match.svc.cluster.local.:50503"
 	qsc, err := newQueryServiceClient(qsAddr)
 	if err != nil {
 		log.Fatalf("failed to connect to QueryService: %+v", err)
@@ -229,11 +230,11 @@ func newSearchFields() *pb.SearchFields {
 
 func newMatch(profile *pb.MatchProfile, tickets []*pb.Ticket, backfill *pb.Backfill) *pb.Match {
 	return &pb.Match{
-		MatchId:            fmt.Sprintf("%s-%s", profile.Name, uuid.Must(uuid.NewRandom())),
-		MatchProfile:       profile.Name,
-		MatchFunction:      "test",
-		Tickets:            tickets,
-		Backfill:           backfill,
+		MatchId:       fmt.Sprintf("%s-%s", profile.Name, uuid.Must(uuid.NewRandom())),
+		MatchProfile:  profile.Name,
+		MatchFunction: "test",
+		Tickets:       tickets,
+		Backfill:      backfill,
 	}
 }
 
@@ -248,7 +249,6 @@ func newBackfill(searchFields *pb.SearchFields, openSlots int) (*pb.Backfill, er
 	}
 	return b, nil
 }
-
 
 func setOpenSlots(b *pb.Backfill, val int32) error {
 	if b.Extensions == nil {
