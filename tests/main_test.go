@@ -77,7 +77,7 @@ func mustCreateTicket(t *testing.T, fe pb.FrontendServiceClient, ticket *pb.Tick
 	return rt
 }
 
-func mustAssignTickets(t *testing.T, be pb.BackendServiceClient, match *pb.Match, connection string) *pb.Assignment {
+func mustAssignTickets(t *testing.T, be pb.BackendServiceClient, match *pb.Match, connection GameServerConnectionName) *pb.Assignment {
 	t.Helper()
 	var ticketIDs []string
 	for _, ticket := range match.Tickets {
@@ -85,21 +85,12 @@ func mustAssignTickets(t *testing.T, be pb.BackendServiceClient, match *pb.Match
 	}
 	group := &pb.AssignmentGroup{
 		TicketIds:  ticketIDs,
-		Assignment: &pb.Assignment{Connection: connection},
+		Assignment: &pb.Assignment{Connection: string(connection)},
 	}
 	if _, err := be.AssignTickets(context.Background(), &pb.AssignTicketsRequest{Assignments: []*pb.AssignmentGroup{group}}); err != nil {
 		t.Fatalf("failed to assign tickets: %+v", err)
 	}
 	return group.Assignment
-}
-
-func mustAcknowledgeBackfill(t *testing.T, fe pb.FrontendServiceClient, backfill *pb.Backfill, assignment *pb.Assignment) *pb.Backfill {
-	t.Helper()
-	newBackfill, err := fe.AcknowledgeBackfill(context.Background(), &pb.AcknowledgeBackfillRequest{BackfillId: backfill.Id, Assignment: assignment})
-	if err != nil {
-		t.Fatalf("failed to acknowledge backfill: %+v", err)
-	}
-	return newBackfill
 }
 
 func mustAssignment(t *testing.T, fe pb.FrontendServiceClient, ticketID string, timeout time.Duration) *pb.Assignment {
