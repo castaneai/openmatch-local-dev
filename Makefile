@@ -20,14 +20,8 @@ down:
 delete:
 	minikube delete -p $(MINIKUBE_PROFILE)
 
-redis-cli:
-	kubectl exec -it -n open-match openmatch-redis-node-0 -- redis-cli
-
 monitor-redis:
 	kubectl exec -n open-match openmatch-redis-node-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
-
-clear-redis:
-	kubectl exec -n open-match openmatch-redis-node-0 -- redis-cli FLUSHALL
 
 log-matchfunction:
 	kubectl logs -f -n default matchfunction
