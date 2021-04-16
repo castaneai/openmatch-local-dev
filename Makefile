@@ -20,12 +20,6 @@ down:
 delete:
 	minikube delete -p $(MINIKUBE_PROFILE)
 
-restart:
-	minikube stop
-	make up-minikube
-	kubectl delete namespace open-match --grace-period=0 --force
-	make up-openmatch
-
 redis-cli:
 	kubectl exec -it -n open-match openmatch-redis-node-0 -- redis-cli
 
