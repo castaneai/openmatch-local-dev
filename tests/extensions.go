@@ -29,7 +29,7 @@ func getOpenSlots(b *pb.Backfill) (int32, error) {
 			return val.Value, nil
 		}
 	}
-	return playersPerMatch, nil
+	return 0, fmt.Errorf("failed to get openSlots extension (key not found)")
 }
 
 func setOpenSlots(b *pb.Backfill, val int32) error {

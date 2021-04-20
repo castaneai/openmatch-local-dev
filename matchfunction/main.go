@@ -254,12 +254,10 @@ func setOpenSlots(b *pb.Backfill, val int32) error {
 	if b.Extensions == nil {
 		b.Extensions = make(map[string]*any.Any)
 	}
-
 	any, err := ptypes.MarshalAny(&wrappers.Int32Value{Value: val})
 	if err != nil {
 		return err
 	}
-
 	b.Extensions[openSlotsKey] = any
 	return nil
 }
@@ -268,7 +266,6 @@ func getOpenSlots(b *pb.Backfill) (int32, error) {
 	if b == nil {
 		return 0, fmt.Errorf("expected backfill is not nil")
 	}
-
 	if b.Extensions != nil {
 		if any, ok := b.Extensions[openSlotsKey]; ok {
 			var val wrappers.Int32Value
@@ -280,6 +277,6 @@ func getOpenSlots(b *pb.Backfill) (int32, error) {
 			return val.Value, nil
 		}
 	}
-
-	return playersPerMatch, nil
+	// defaults to zero
+	return 0, nil
 }

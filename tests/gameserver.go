@@ -54,14 +54,24 @@ func (gs *GameServer) Connect(ticketID string) {
 	gs.log("player connected (ticketID: %s) (%d players in room)", ticketID, playerCount)
 }
 
+func (gs *GameServer) Disconnect(ticketID string) {
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
+	delete(gs.playerTickets, ticketID)
+	playerCount := len(gs.playerTickets)
+	gs.log("player disconnected (ticketID: %s) (%d players in room)", ticketID, playerCount)
+}
+
 func (gs *GameServer) StartBackfill(ctx context.Context, assignment *pb.Assignment, openSlots int) error {
-	backfill, err := gs.omFrontend.CreateBackfill(ctx, &pb.CreateBackfillRequest{Backfill: &pb.Backfill{}})
+	req := &pb.Backfill{}
+	if err := setOpenSlots(req, int32(openSlots)); err != nil {
+		return err
+	}
+	backfill, err := gs.omFrontend.CreateBackfill(ctx, &pb.CreateBackfillRequest{Backfill: req})
 	if err != nil {
 		return err
 	}
-	if err := setOpenSlots(backfill, int32(openSlots)); err != nil {
-		return err
-	}
+	gs.log("backfill created (backfillID: %s, openSlots: %d)", backfill.Id, openSlots)
 	gs.StartBackfillCreated(backfill, assignment)
 	return nil
 }
@@ -89,6 +99,17 @@ func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb
 		}
 	}()
 	gs.log("start polling with acknowledge backfill")
+}
+
+func (gs *GameServer) StopBackfill(ctx context.Context, backfillID string) error {
+	if gs.stopBackfill != nil {
+		gs.stopBackfill()
+	}
+	if _, err := gs.omFrontend.DeleteBackfill(ctx, &pb.DeleteBackfillRequest{BackfillId: backfillID}); err != nil {
+		return err
+	}
+	gs.log("backfill stopped (backfillID: %s)", backfillID)
+	return nil
 }
 
 func (gs *GameServer) log(format string, args ...interface{}) {
