@@ -199,9 +199,6 @@ func handleBackfills(profile *pb.MatchProfile, tickets []*pb.Ticket, backfills [
 		}
 
 		if len(matchTickets) > 0 {
-			if err := setOpenSlots(backfill, openSlots); err != nil {
-				return nil, nil, err
-			}
 			matches = append(matches, newMatch(profile, matchTickets, backfill))
 		}
 	}
@@ -215,7 +212,7 @@ func makeMatchWithBackfill(profile *pb.MatchProfile, tickets []*pb.Ticket) (*pb.
 	if len(tickets) > playersPerMatch {
 		return nil, fmt.Errorf("too many tickets")
 	}
-	backfill, err := newBackfill(newSearchFields(), playersPerMatch-len(tickets))
+	backfill, err := newBackfill(newSearchFields(), playersPerMatch)
 	if err != nil {
 		return nil, err
 	}
