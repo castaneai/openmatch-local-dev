@@ -27,3 +27,6 @@ monitor-redis:
 log-matchfunction:
 	kubectl logs -f -n default matchfunction
 
+test:
+	cd matchfunction/ && go test -count=1 ./...
+	cd tests/ && go test -count=1 ./...

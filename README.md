@@ -21,7 +21,6 @@ make up
 
 ```sh
 make dev # make Match Function up
-cd tests/
-go test ./...
+make test
 ```
 
