@@ -1,35 +1,32 @@
 MINIKUBE_PROFILE := omdemo
-OPEN_MATCH_VERSION := 1.0.0
+OPEN_MATCH_VERSION := 1.2.0
 
 dev:
 	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --port-forward --tail
 
-up-minikube:
+up:
 	minikube start -p $(MINIKUBE_PROFILE) --cpus=3 --memory=2500mb
 	minikube profile $(MINIKUBE_PROFILE)
-
-up-openmatch:
 	helm repo add open-match https://open-match.dev/chart/stable
 	helm install openmatch --namespace open-match --create-namespace open-match/open-match \
 	  --version=v$(OPEN_MATCH_VERSION) \
 	  --set open-match-customize.enabled=true \
 	  --set open-match-customize.evaluator.enabled=true \
-	  --set open-match-override.enabled=true
+	  --set open-match-override.enabled=true \
+	  --set redis.cluster.slaveCount=1
 
-restart:
-	minikube stop
-	make up-minikube
-	kubectl delete namespace open-match --grace-period=0 --force
-	make up-openmatch
+down:
+	minikube stop -p $(MINIKUBE_PROFILE)
 
-redis-cli:
-	kubectl exec -it -n open-match om-redis-master-0 -- redis-cli
+delete:
+	minikube delete -p $(MINIKUBE_PROFILE)
 
 monitor-redis:
-	kubectl exec -n open-match om-redis-master-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
-
-clear-redis:
-	kubectl exec -n open-match om-redis-master-0 -- redis-cli FLUSHALL
+	kubectl exec -n open-match openmatch-redis-node-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
 
 log-matchfunction:
-	kubectl logs -f -n omdemo matchfunction
+	kubectl logs -f -n default matchfunction
+
+test:
+	cd matchfunction/ && go test -count=1 ./...
+	cd tests/ && go test -count=1 ./...

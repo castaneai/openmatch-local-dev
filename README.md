@@ -8,20 +8,19 @@ A Local development example for [Open Match](https://open-match.dev).
 
 - [minikube](https://github.com/kubernetes/minikube)
 - [skaffold](https://github.com/GoogleContainerTools/skaffold)
-- Go
+- Go 1.16
 - GNU Make
 
 ## Install
 
 ```
-make up-minikube
-make up-openmatch
+make up
 ```
 
 ## Usage
 
 ```sh
 make dev # make Match Function up
-go run director/main.go # make Director up
-go run testclient/main.go # run matchmaking
+make test
 ```
+
