@@ -52,7 +52,7 @@ func (gs *GameServer) ConnectionName() GameServerConnectionName {
 	return gs.connectionName
 }
 
-func (gs *GameServer) Connect(ctx context.Context, ticketID string) error {
+func (gs *GameServer) ConnectPlayer(ctx context.Context, ticketID string) error {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
@@ -74,7 +74,7 @@ func (gs *GameServer) Connect(ctx context.Context, ticketID string) error {
 	return nil
 }
 
-func (gs *GameServer) Disconnect(ctx context.Context, ticketID string) error {
+func (gs *GameServer) DisconnectPlayer(ctx context.Context, ticketID string) error {
 	gs.mu.Lock()
 	defer gs.mu.Unlock()
 
