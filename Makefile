@@ -1,5 +1,5 @@
 MINIKUBE_PROFILE := omdemo
-OPEN_MATCH_VERSION := 1.2.0-rc.1
+OPEN_MATCH_VERSION := 1.2.0
 
 dev:
 	skaffold dev --minikube-profile $(MINIKUBE_PROFILE) --port-forward --tail
@@ -12,7 +12,8 @@ up:
 	  --version=v$(OPEN_MATCH_VERSION) \
 	  --set open-match-customize.enabled=true \
 	  --set open-match-customize.evaluator.enabled=true \
-	  --set open-match-override.enabled=true
+	  --set open-match-override.enabled=true \
+	  --set redis.cluster.slaveCount=1
 
 down:
 	minikube stop -p $(MINIKUBE_PROFILE)
