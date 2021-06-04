@@ -29,9 +29,6 @@ func TestMakeMatches(t *testing.T) {
 		assert.Len(t, matches, 1)
 		assert.Len(t, matches[0].Tickets, len(poolTickets[pool.Name]))
 		assert.NotNil(t, matches[0].Backfill)
-		slots, err := getOpenSlots(matches[0].Backfill)
-		assert.NoError(t, err)
-		assert.Equal(t, playersPerMatch-len(poolTickets[pool.Name]), int(slots))
 		assert.True(t, matches[0].AllocateGameserver)
 	})
 
@@ -66,9 +63,6 @@ func TestMakeMatches(t *testing.T) {
 		assert.Len(t, matches[0].Tickets, numTickets)
 		assert.Equal(t, "ticket-1", matches[0].Tickets[0].Id)
 		assert.NotNil(t, matches[0].Backfill)
-		slots, err := getOpenSlots(matches[0].Backfill)
-		assert.NoError(t, err)
-		assert.Equal(t, playersPerMatch-1, int(slots))
 		assert.True(t, matches[0].AllocateGameserver)
 
 		poolBackfills[pool.Name] = nil
@@ -86,9 +80,6 @@ func TestMakeMatches(t *testing.T) {
 		assert.Len(t, matches, 1)
 		assert.Len(t, matches[0].Tickets, numTickets)
 		assert.NotNil(t, matches[0].Backfill)
-		slots, err = getOpenSlots(matches[0].Backfill)
-		assert.NoError(t, err)
-		assert.Equal(t, playersPerMatch-2, int(slots))
 		assert.False(t, matches[0].AllocateGameserver)
 	})
 
