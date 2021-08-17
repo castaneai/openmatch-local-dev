@@ -13,6 +13,11 @@ up:
 	  --set open-match-customize.enabled=true \
 	  --set open-match-customize.evaluator.enabled=true \
 	  --set open-match-override.enabled=true \
+	  --set frontend.replicas=1 \
+	  --set backend.replicas=1 \
+	  --set query.replicas=1 \
+	  --set function.replicas=1 \
+	  --set swaggerui.replicas=1 \
 	  --set redis.cluster.slaveCount=1
 
 down:
