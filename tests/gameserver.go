@@ -132,6 +132,8 @@ func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb
 	// The allocated GameServer starts polling Open Match to acknowledge the backfill
 	// ref: https://open-match.dev/site/docs/guides/backfill/
 	pollingCtx, cancel := context.WithCancel(context.Background())
+	gs.mu.Lock()
+	defer gs.mu.Unlock()
 	gs.stopBackfill = cancel
 	go func() {
 		ticker := time.NewTicker(acknowledgeBackfillInterval)
