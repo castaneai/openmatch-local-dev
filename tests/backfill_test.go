@@ -5,10 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"google.golang.org/protobuf/types/known/timestamppb"
-
 	"github.com/stretchr/testify/assert"
-
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -35,7 +33,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NotNil(t, matches[0].Backfill)
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch), openSlots)
+		assert.Equal(t, int32(playersPerMatch-1), openSlots)
 		currentBackfill = matches[0].Backfill
 
 		allocatedGameServer = AllocateGameServer("test-gs", frontend)
@@ -57,7 +55,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NotNil(t, matches[0].Backfill)
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-1), openSlots)
+		assert.Equal(t, int32(playersPerMatch-2), openSlots)
 
 		assignment := mustAssignment(t, frontend, ticket2.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -74,7 +72,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NotNil(t, matches[0].Backfill)
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-2), openSlots)
+		assert.Equal(t, int32(playersPerMatch-3), openSlots)
 
 		assignment := mustAssignment(t, frontend, ticket3.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -95,7 +93,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NotNil(t, matches[0].Backfill)
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-2), openSlots)
+		assert.Equal(t, int32(playersPerMatch-3), openSlots)
 
 		assignment := mustAssignment(t, frontend, ticket4.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)

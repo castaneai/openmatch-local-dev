@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	acknowledgeBackfillInterval = 500 * time.Millisecond
+	acknowledgeBackfillInterval = 10 * time.Millisecond
 )
 
 var (
@@ -66,10 +66,6 @@ func (gs *GameServer) ConnectPlayer(ctx context.Context, ticketID string) error 
 		return ErrGameServerCapacityExceeded
 	}
 	gs.playerTickets[ticketID] = struct{}{}
-
-	if err := gs.updateBackfillOpenSlots(ctx, playersPerMatch-newPlayerCount); err != nil {
-		return err
-	}
 	gs.log("player connected (ticketID: %s) (%d players in room)", ticketID, newPlayerCount)
 	return nil
 }
@@ -83,34 +79,8 @@ func (gs *GameServer) DisconnectPlayer(ctx context.Context, ticketID string) err
 	}
 	delete(gs.playerTickets, ticketID)
 
-	if err := gs.updateBackfillOpenSlots(ctx, playersPerMatch-len(gs.playerTickets)); err != nil {
-		return err
-	}
 	newPlayerCount := len(gs.playerTickets)
 	gs.log("player disconnected (ticketID: %s) (%d players in room)", ticketID, newPlayerCount)
-	return nil
-}
-
-func (gs *GameServer) updateBackfillOpenSlots(ctx context.Context, newOpenSlots int) error {
-	if gs.backfillID == "" {
-		gs.log("backfill is missing; skip update backfill")
-		return nil
-	}
-	backfill, err := gs.omFrontend.GetBackfill(ctx, &pb.GetBackfillRequest{BackfillId: gs.backfillID})
-	if err != nil {
-		return err
-	}
-	prevOpenSlots, err := getOpenSlots(backfill)
-	if err != nil {
-		return err
-	}
-	if err := setOpenSlots(backfill, int32(newOpenSlots)); err != nil {
-		return err
-	}
-	if _, err := gs.omFrontend.UpdateBackfill(ctx, &pb.UpdateBackfillRequest{Backfill: backfill}); err != nil {
-		return err
-	}
-	gs.log("backfill openSlots updated (%d -> %d)", prevOpenSlots, newOpenSlots)
 	return nil
 }
 
@@ -138,16 +108,31 @@ func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb
 	go func() {
 		ticker := time.NewTicker(acknowledgeBackfillInterval)
 		defer ticker.Stop()
+		openSlots := int32(0)
 		for {
 			select {
 			case <-pollingCtx.Done():
 				return
 			case <-ticker.C:
-				if _, err := gs.omFrontend.AcknowledgeBackfill(pollingCtx, &pb.AcknowledgeBackfillRequest{
+				bf, err := gs.omFrontend.AcknowledgeBackfill(pollingCtx, &pb.AcknowledgeBackfillRequest{
 					BackfillId: backfill.Id,
 					Assignment: assignment,
-				}); err != nil {
+				})
+				if err != nil {
+					if pollingCtx.Err() != nil {
+						return
+					}
 					gs.log("failed to acknowledge backfill: %+v", err)
+					continue
+				}
+				slots, err := getOpenSlots(bf)
+				if err != nil {
+					gs.log("failed to get openSlots: %+v", err)
+					continue
+				}
+				if slots != openSlots {
+					gs.log("acknowledge backfill (openSlots: %d)", slots)
+					openSlots = slots
 				}
 			}
 		}

@@ -14,12 +14,12 @@ deploy:
       - ./matchfunction/matchfunction.yaml
 portForward:
   - resourceType: Service
-    resourceName: openmatch-open-match-frontend
+    resourceName: open-match-frontend
     namespace: open-match
     port: 50504
     localPort: 50504
   - resourceType: Service
-    resourceName: openmatch-open-match-backend
+    resourceName: open-match-backend
     namespace: open-match
     port: 50505
     localPort: 50505

@@ -10,10 +10,8 @@ import (
 	"github.com/golang/protobuf/ptypes/any"
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
-
-	"open-match.dev/open-match/pkg/matchfunction"
-
 	"google.golang.org/grpc"
+	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -26,7 +24,7 @@ func main() {
 	// A query service is in open-match core namespace
 	// see https://github.com/googleforgames/open-match/blob/26d1aa236a5238b1387e91d506d21ed09f3891cc/install/helm/open-match/values.yaml#L54
 	// see also https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records
-	qsAddr := "openmatch-open-match-query.open-match.svc.cluster.local.:50503"
+	qsAddr := "open-match-query.open-match.svc.cluster.local.:50503"
 	qsc, err := newQueryServiceClient(qsAddr)
 	if err != nil {
 		log.Fatalf("failed to connect to QueryService: %+v", err)
@@ -199,6 +197,9 @@ func handleBackfills(profile *pb.MatchProfile, tickets []*pb.Ticket, backfills [
 		}
 
 		if len(matchTickets) > 0 {
+			if err := setOpenSlots(backfill, openSlots); err != nil {
+				return nil, nil, err
+			}
 			matches = append(matches, newMatch(profile, matchTickets, backfill))
 		}
 	}
@@ -212,7 +213,7 @@ func makeMatchWithBackfill(profile *pb.MatchProfile, tickets []*pb.Ticket) (*pb.
 	if len(tickets) > playersPerMatch {
 		return nil, fmt.Errorf("too many tickets")
 	}
-	backfill, err := newBackfill(newSearchFields(), playersPerMatch)
+	backfill, err := newBackfill(newSearchFields(), playersPerMatch-len(tickets))
 	if err != nil {
 		return nil, err
 	}
