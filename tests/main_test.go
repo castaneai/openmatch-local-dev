@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"testing"
 	"time"
 
@@ -47,25 +46,6 @@ func newOMBackendClient(t *testing.T) pb.BackendServiceClient {
 	return pb.NewBackendServiceClient(cc)
 }
 
-func fetchMatches(t *testing.T, be pb.BackendServiceClient, profile *pb.MatchProfile) []*pb.Match {
-	stream, err := be.FetchMatches(context.Background(), &pb.FetchMatchesRequest{Config: mfConfig, Profile: profile})
-	if err != nil {
-		t.Fatalf("failed to fetch matches: %+v", err)
-	}
-	var matches []*pb.Match
-	for {
-		resp, err := stream.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Fatalf("failed to recv matches: %+v", err)
-		}
-		matches = append(matches, resp.Match)
-	}
-	return matches
-}
-
 func mustCreateTicket(t *testing.T, fe pb.FrontendServiceClient, ticket *pb.Ticket) *pb.Ticket {
 	t.Helper()
 	rt, err := fe.CreateTicket(context.Background(), &pb.CreateTicketRequest{
@@ -75,22 +55,6 @@ func mustCreateTicket(t *testing.T, fe pb.FrontendServiceClient, ticket *pb.Tick
 		t.Fatal(err)
 	}
 	return rt
-}
-
-func mustAssignTickets(t *testing.T, be pb.BackendServiceClient, match *pb.Match, connection GameServerConnectionName) *pb.Assignment {
-	t.Helper()
-	var ticketIDs []string
-	for _, ticket := range match.Tickets {
-		ticketIDs = append(ticketIDs, ticket.Id)
-	}
-	group := &pb.AssignmentGroup{
-		TicketIds:  ticketIDs,
-		Assignment: &pb.Assignment{Connection: string(connection)},
-	}
-	if _, err := be.AssignTickets(context.Background(), &pb.AssignTicketsRequest{Assignments: []*pb.AssignmentGroup{group}}); err != nil {
-		t.Fatalf("failed to assign tickets: %+v", err)
-	}
-	return group.Assignment
 }
 
 func mustAssignment(t *testing.T, fe pb.FrontendServiceClient, ticketID string, timeout time.Duration) *pb.Assignment {

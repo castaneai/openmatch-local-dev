@@ -8,7 +8,7 @@ up:
 	minikube start -p $(MINIKUBE_PROFILE) --cpus=3 --memory=2500mb
 	minikube profile $(MINIKUBE_PROFILE)
 	helm repo add open-match https://open-match.dev/chart/stable
-	helm install open-match --namespace open-match --create-namespace open-match/open-match \
+	helm upgrade --install open-match --namespace open-match --create-namespace open-match/open-match \
 	  --version=v$(OPEN_MATCH_VERSION) \
 	  --set open-match-customize.enabled=true \
 	  --set open-match-customize.evaluator.enabled=true \

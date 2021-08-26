@@ -14,6 +14,10 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 	ctx := context.Background()
 	frontend := newOMFrontendClient(t)
 	backend := newOMBackendClient(t)
+	director := &Director{
+		omFrontend: frontend,
+		omBackend:  backend,
+	}
 
 	profile := &pb.MatchProfile{Name: "test-profile", Pools: []*pb.Pool{
 		{Name: "test-pool", CreatedAfter: timestamppb.New(time.Now())},
@@ -25,7 +29,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	ticket1 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
-		matches := fetchMatches(t, backend, profile)
+		matches, err := director.FetchMatches(ctx, profile, mfConfig)
+		assert.NoError(t, err)
 		assert.Len(t, matches, 1)
 		assert.Equal(t, true, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
@@ -36,19 +41,21 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.Equal(t, int32(playersPerMatch-1), openSlots)
 		currentBackfill = matches[0].Backfill
 
-		allocatedGameServer = AllocateGameServer("test-gs", frontend)
+		res, err := director.AssignTickets(ctx, matches)
+		assert.NoError(t, err)
+		assert.NotNil(t, res.AllocatedServer)
+		allocatedGameServer = res.AllocatedServer
+		assert.Len(t, res.AssignmentGroups, 0)
 
-		mustAssignTickets(t, backend, matches[0], allocatedGameServer.ConnectionName())
 		assignment = mustAssignment(t, frontend, ticket1.Id, 3*time.Second)
-
-		allocatedGameServer.StartBackfillCreated(currentBackfill, assignment)
 		assert.NoError(t, allocatedGameServer.ConnectPlayer(ctx, ticket1.Id))
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
 	}
 
 	ticket2 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
-		matches := fetchMatches(t, backend, profile)
+		matches, err := director.FetchMatches(ctx, profile, mfConfig)
+		assert.NoError(t, err)
 		assert.Len(t, matches, 1)
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
@@ -56,6 +63,11 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-2), openSlots)
+
+		res, err := director.AssignTickets(ctx, matches)
+		assert.NoError(t, err)
+		assert.Nil(t, res.AllocatedServer)
+		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket2.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -65,7 +77,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	ticket3 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
-		matches := fetchMatches(t, backend, profile)
+		matches, err := director.FetchMatches(ctx, profile, mfConfig)
+		assert.NoError(t, err)
 		assert.Len(t, matches, 1)
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
@@ -73,6 +86,11 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-3), openSlots)
+
+		res, err := director.AssignTickets(ctx, matches)
+		assert.NoError(t, err)
+		assert.Nil(t, res.AllocatedServer)
+		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket3.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -86,7 +104,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	ticket4 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
-		matches := fetchMatches(t, backend, profile)
+		matches, err := director.FetchMatches(ctx, profile, mfConfig)
+		assert.NoError(t, err)
 		assert.Len(t, matches, 1)
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
@@ -94,6 +113,11 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-3), openSlots)
+
+		res, err := director.AssignTickets(ctx, matches)
+		assert.NoError(t, err)
+		assert.Nil(t, res.AllocatedServer)
+		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket4.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)

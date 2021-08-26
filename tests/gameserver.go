@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -35,9 +36,10 @@ type GameServer struct {
 	stopBackfill   context.CancelFunc
 }
 
-func AllocateGameServer(connName GameServerConnectionName, omFrontend pb.FrontendServiceClient) *GameServer {
+func AllocateGameServer(omFrontend pb.FrontendServiceClient) *GameServer {
 	gameServerMapMu.Lock()
 	defer gameServerMapMu.Unlock()
+	connName := GameServerConnectionName(uuid.Must(uuid.NewRandom()).String())
 	gameServerMap[connName] = &GameServer{
 		omFrontend:     omFrontend,
 		connectionName: connName,
