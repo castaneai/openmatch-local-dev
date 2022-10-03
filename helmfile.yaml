@@ -1,0 +1,19 @@
+repositories:
+  - name: open-match
+    url: https://open-match.dev/chart/stable
+
+releases:
+  - chart: open-match/open-match
+    namespace: open-match
+    name: open-match
+    version: 1.4.0
+    values:
+      - open-match-core:
+          swaggerui:
+            enabled: false
+        open-match-customize:
+          enabled: true
+          evaluator:
+            enabled: true
+        open-match-override:
+          enabled: true

@@ -7,6 +7,7 @@ A Local development example for [Open Match](https://open-match.dev).
 ## Requirements
 
 - [minikube](https://github.com/kubernetes/minikube)
+- [helmfile](https://github.com/roboll/helmfile)
 - [skaffold](https://github.com/GoogleContainerTools/skaffold)
 - Go 1.16
 - GNU Make
