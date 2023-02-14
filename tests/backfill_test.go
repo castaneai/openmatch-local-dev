@@ -23,7 +23,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	profile := &pb.MatchProfile{Name: "test-profile", Pools: []*pb.Pool{
 		// Create a unique pool name for each test to avoid mixing with tickets created during previous tests.
-		newPool(fmt.Sprintf("test-pool-%s", uuid.Must(uuid.NewRandom()))),
+		{Name: fmt.Sprintf("test-pool-%s", uuid.Must(uuid.NewRandom()))},
 	}}
 
 	var allocatedGameServer *GameServer

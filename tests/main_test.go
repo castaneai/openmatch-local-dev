@@ -43,12 +43,6 @@ func newOMBackendClient(t *testing.T) pb.BackendServiceClient {
 	return pb.NewBackendServiceClient(cc)
 }
 
-func newPool(name string) *pb.Pool {
-	return &pb.Pool{
-		Name: name,
-	}
-}
-
 func mustCreateTicket(t *testing.T, fe pb.FrontendServiceClient, ticket *pb.Ticket) *pb.Ticket {
 	t.Helper()
 	rt, err := fe.CreateTicket(context.Background(), &pb.CreateTicketRequest{
