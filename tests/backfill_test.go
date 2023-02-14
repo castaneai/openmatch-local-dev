@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"google.golang.org/protobuf/types/known/timestamppb"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -20,7 +19,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 	}
 
 	profile := &pb.MatchProfile{Name: "test-profile", Pools: []*pb.Pool{
-		{Name: "test-pool", CreatedAfter: timestamppb.New(time.Now())},
+		newPool("test-pool"),
 	}}
 
 	var allocatedGameServer *GameServer

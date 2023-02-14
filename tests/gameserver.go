@@ -116,7 +116,7 @@ func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb
 			case <-pollingCtx.Done():
 				return
 			case <-ticker.C:
-				bf, err := gs.omFrontend.AcknowledgeBackfill(pollingCtx, &pb.AcknowledgeBackfillRequest{
+				resp, err := gs.omFrontend.AcknowledgeBackfill(pollingCtx, &pb.AcknowledgeBackfillRequest{
 					BackfillId: backfill.Id,
 					Assignment: assignment,
 				})
@@ -127,7 +127,7 @@ func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb
 					gs.log("failed to acknowledge backfill: %+v", err)
 					continue
 				}
-				slots, err := getOpenSlots(bf)
+				slots, err := getOpenSlots(resp.Backfill)
 				if err != nil {
 					gs.log("failed to get openSlots: %+v", err)
 					continue

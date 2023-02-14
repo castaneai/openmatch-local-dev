@@ -7,15 +7,15 @@ import (
 	"testing"
 	"time"
 
-	"open-match.dev/open-match/pkg/pb"
-
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"open-match.dev/open-match/pkg/pb"
 )
 
 const (
 	// see ../matchfunction/main.go
 	// see also https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records
-	matchFunctionHost = "matchfunction.default.svc.cluster.local."
+	matchFunctionHost = "matchfunction.open-match.svc.cluster.local."
 	matchFunctionPort = 50502
 
 	// See portForward section in skaffold.yaml
@@ -44,6 +44,13 @@ func newOMBackendClient(t *testing.T) pb.BackendServiceClient {
 		t.Fatal(err)
 	}
 	return pb.NewBackendServiceClient(cc)
+}
+
+func newPool(name string) *pb.Pool {
+	return &pb.Pool{
+		Name:         name,
+		CreatedAfter: timestamppb.New(time.Now().Add(-1000 * time.Millisecond)),
+	}
 }
 
 func mustCreateTicket(t *testing.T, fe pb.FrontendServiceClient, ticket *pb.Ticket) *pb.Ticket {

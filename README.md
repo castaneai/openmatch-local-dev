@@ -4,24 +4,17 @@ A Local development example for [Open Match](https://open-match.dev).
 
 ![Overview](./overview.drawio.svg)
 
-## Requirements
+## Prerequisites
 
-- [minikube](https://github.com/kubernetes/minikube)
-- [helmfile](https://github.com/roboll/helmfile)
-- [skaffold](https://github.com/GoogleContainerTools/skaffold)
-- Go 1.16
 - GNU Make
-
-## Install
-
-```
-make up
-```
+- [aqua](https://aquaproj.github.io/)
 
 ## Usage
 
 ```sh
+aqua i  # Set-up CLI tools
+make up  # Set-up kubernetes cluster
 make dev # make Match Function up
 make test
+make down  # Tear-down the cluster
 ```
-

@@ -6,7 +6,7 @@ releases:
   - chart: open-match/open-match
     namespace: open-match
     name: open-match
-    version: 1.4.0
+    version: 1.6.0
     values:
       - open-match-core:
           swaggerui:
@@ -17,3 +17,33 @@ releases:
             enabled: true
         open-match-override:
           enabled: true
+        backend:
+          replicas: 1
+        frontend:
+          replicas: 1
+        query:
+          replicas: 1
+        evaluator:
+          replicas: 1
+        redis:
+          sentinel:
+            enabled: false
+          replica:
+            replicaCount: 0
+          metrics:
+            enabled: false
+        global:
+          kubernetes:
+            horizontalPodAutoScaler:
+              frontend:
+                minReplicas: 1
+                maxReplicas: 1
+              backend:
+                minReplicas: 1
+                maxReplicas: 1
+              query:
+                minReplicas: 1
+                maxReplicas: 1
+              evaluator:
+                minReplicas: 1
+                maxReplicas: 1

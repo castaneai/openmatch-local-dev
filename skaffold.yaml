@@ -1,17 +1,19 @@
-apiVersion: skaffold/v2beta10
+apiVersion: skaffold/v4beta2
 kind: Config
 build:
   artifacts:
     - image: omdemo/matchfunction
-      context: ./matchfunction
-      docker:
-        dockerfile: Dockerfile
-  local:
-    useBuildkit: true
+      ko:
+        main: ./matchfunction
+        dependencies:
+          paths: ["**/*.go"]
+          ignore: ["tests/**/*.go"]
 deploy:
   kubectl:
-    manifests:
-      - ./matchfunction/matchfunction.yaml
+    defaultNamespace: open-match
+manifests:
+  rawYaml:
+    - ./matchfunction/matchfunction.yaml
 portForward:
   - resourceType: Service
     resourceName: open-match-frontend

@@ -1,0 +1,18 @@
+---
+# aqua - Declarative CLI Version Manager
+# https://aquaproj.github.io/
+# checksum:
+#   # https://aquaproj.github.io/docs/reference/checksum/
+#   enabled: true
+#   require_checksum: true
+registries:
+- type: standard
+  ref: v3.131.0 # renovate: depName=aquaproj/aqua-registry
+packages:
+- name: kubernetes/kubectl
+  version: v1.24.10
+- name: golang/go@go1.20
+- name: kubernetes/minikube@v1.29.0
+- name: helm/helm@v3.11.1
+- name: helmfile/helmfile@v0.150.0
+- name: ko-build/ko@v0.12.0

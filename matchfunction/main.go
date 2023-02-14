@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
 )
@@ -65,15 +66,9 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 		log.Printf("failed to query backfill pools: %+v", err)
 		return err
 	}
-	if poolTicketsIsEmpty(poolTickets) {
-		log.Printf("query pools result empty (profile: %s, pools: %v)", request.Profile.Name, poolNames)
-		return nil
-	}
-	log.Printf("%d pool tickets found with profile: %s", len(poolTickets), request.Profile.Name)
 	for poolName, tickets := range poolTickets {
 		log.Printf("pool: %s, tickets: %s", poolName, spew.Sdump(tickets))
 	}
-	log.Printf("%d backfills found with profile: %s", len(poolBackfills), request.Profile.Name)
 	for poolName, backfills := range poolBackfills {
 		log.Printf("pool: %s, backfills: %s", poolName, spew.Sdump(backfills))
 	}
@@ -92,18 +87,6 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 	return nil
 }
 
-func poolTicketsIsEmpty(poolTickets map[string][]*pb.Ticket) bool {
-	if len(poolTickets) < 1 {
-		return true
-	}
-	for _, tickets := range poolTickets {
-		if len(tickets) > 0 {
-			return false
-		}
-	}
-	return true
-}
-
 func newQueryServiceClient(addr string) (pb.QueryServiceClient, error) {
 	cc, err := grpc.Dial(addr, grpc.WithInsecure())
 	if err != nil {
@@ -113,29 +96,34 @@ func newQueryServiceClient(addr string) (pb.QueryServiceClient, error) {
 }
 
 func makeMatches(profile *pb.MatchProfile, poolTickets map[string][]*pb.Ticket, poolBackfills map[string][]*pb.Backfill) ([]*pb.Match, error) {
-	tickets := allTickets(poolTickets)
-	backfills := allBackfills(poolBackfills)
-
 	var matches []*pb.Match
 
 	// First, creating matches with the existing backfills.
-	newMatches, remainingTickets, err := handleBackfills(profile, tickets, backfills)
-	if err != nil {
-		return nil, err
-	}
-	matches = append(matches, newMatches...)
+	for pool, tickets := range poolTickets {
+		var backfills []*pb.Backfill
+		bs, ok := poolBackfills[pool]
+		if ok {
+			backfills = bs
+		}
 
-	// Second, creating full-matches with tickets
-	newMatches, remainingTickets = makeFullMatches(profile, remainingTickets)
-	matches = append(matches, newMatches...)
-
-	if len(remainingTickets) > 0 {
-		// Third, the remaining tickets will make matches with backfill
-		remainingMatch, err := makeMatchWithBackfill(profile, remainingTickets)
+		newMatches, remainingTickets, err := handleBackfills(profile, tickets, backfills)
 		if err != nil {
 			return nil, err
 		}
-		matches = append(matches, remainingMatch)
+		matches = append(matches, newMatches...)
+
+		// Second, creating full-matches with tickets
+		newMatches, remainingTickets = makeFullMatches(profile, remainingTickets)
+		matches = append(matches, newMatches...)
+
+		if len(remainingTickets) > 0 {
+			// Third, the remaining tickets will make matches with backfill
+			remainingMatch, err := makeMatchWithBackfill(profile, remainingTickets)
+			if err != nil {
+				return nil, err
+			}
+			matches = append(matches, remainingMatch)
+		}
 	}
 
 	return matches, nil
@@ -150,34 +138,6 @@ func makeFullMatches(profile *pb.MatchProfile, tickets []*pb.Ticket) ([]*pb.Matc
 		matches = append(matches, match)
 	}
 	return matches, tickets
-}
-
-func allTickets(poolTickets map[string][]*pb.Ticket) []*pb.Ticket {
-	allTicketsMap := map[string]*pb.Ticket{}
-	for _, tickets := range poolTickets {
-		for _, ticket := range tickets {
-			allTicketsMap[ticket.Id] = ticket
-		}
-	}
-	var allTickets []*pb.Ticket
-	for _, ticket := range allTicketsMap {
-		allTickets = append(allTickets, ticket)
-	}
-	return allTickets
-}
-
-func allBackfills(poolBackfills map[string][]*pb.Backfill) []*pb.Backfill {
-	allBackfillsMap := map[string]*pb.Backfill{}
-	for _, backfills := range poolBackfills {
-		for _, backfill := range backfills {
-			allBackfillsMap[backfill.Id] = backfill
-		}
-	}
-	var allBackfills []*pb.Backfill
-	for _, backfill := range allBackfillsMap {
-		allBackfills = append(allBackfills, backfill)
-	}
-	return allBackfills
 }
 
 func handleBackfills(profile *pb.MatchProfile, tickets []*pb.Ticket, backfills []*pb.Backfill) ([]*pb.Match, []*pb.Ticket, error) {
@@ -239,7 +199,7 @@ func newMatch(profile *pb.MatchProfile, tickets []*pb.Ticket, backfill *pb.Backf
 func newBackfill(searchFields *pb.SearchFields, openSlots int) (*pb.Backfill, error) {
 	b := &pb.Backfill{
 		SearchFields: searchFields,
-		CreateTime:   ptypes.TimestampNow(),
+		CreateTime:   timestamppb.Now(),
 		Generation:   0,
 	}
 	if err := setOpenSlots(b, int32(openSlots)); err != nil {

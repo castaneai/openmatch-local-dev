@@ -2,13 +2,12 @@ kind: Pod
 apiVersion: v1
 metadata:
   name: matchfunction
-  namespace: default
   labels:
     component: matchfunction
 spec:
   containers:
     - name: matchfunction
-      image: omdemo/matchfunction:latest
+      image: omdemo/matchfunction
       imagePullPolicy: IfNotPresent
       ports:
         - name: grpc
@@ -18,7 +17,6 @@ kind: Service
 apiVersion: v1
 metadata:
   name: matchfunction
-  namespace: default
   labels:
     component: matchfunction
 spec:
