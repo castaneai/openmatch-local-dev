@@ -33,10 +33,17 @@ type GameServer struct {
 	players        map[string]struct{}
 	mu             sync.RWMutex
 	logger         *log.Logger
-	backfillWorker atomic.Pointer[backfillWorker]
+	backfillAcker  atomic.Pointer[backfillAcker]
 }
 
-func AllocateGameServer(omFrontend pb.FrontendServiceClient) *GameServer {
+func getGameServer(name GameServerConnectionName) (*GameServer, bool) {
+	gameServerMapMu.RLock()
+	defer gameServerMapMu.RUnlock()
+	gs, ok := gameServerMap[name]
+	return gs, ok
+}
+
+func allocateGameServer(omFrontend pb.FrontendServiceClient) *GameServer {
 	gameServerMapMu.Lock()
 	defer gameServerMapMu.Unlock()
 	connName := GameServerConnectionName(uuid.Must(uuid.NewRandom()).String())
@@ -88,29 +95,28 @@ func (gs *GameServer) DisconnectPlayer(ctx context.Context, ticketID string) err
 	return nil
 }
 
-func (gs *GameServer) StartBackfill(ctx context.Context, assignment *pb.Assignment, openSlots int) error {
+func (gs *GameServer) CreateBackfill(ctx context.Context, assignment *pb.Assignment, openSlots int) (*pb.Backfill, error) {
 	req := &pb.Backfill{}
 	if err := setOpenSlots(req, int32(openSlots)); err != nil {
-		return err
+		return nil, err
 	}
 	backfill, err := gs.omFrontend.CreateBackfill(ctx, &pb.CreateBackfillRequest{Backfill: req})
 	if err != nil {
-		return err
+		return nil, err
 	}
 	gs.log("backfill created (backfillID: %s, openSlots: %d)", backfill.Id, openSlots)
-	gs.StartBackfillCreated(backfill, assignment)
-	return nil
+	return backfill, nil
 }
 
-func (gs *GameServer) StartBackfillCreated(backfill *pb.Backfill, assignment *pb.Assignment) {
+func (gs *GameServer) StartBackfill(backfill *pb.Backfill, assignment *pb.Assignment) {
 	// The allocated GameServer starts polling Open Match to acknowledge the backfill
 	// ref: https://open-match.dev/site/docs/guides/backfill/
-	gs.backfillWorker.Store(startBackfillWorker(gs.omFrontend, backfill, assignment))
+	gs.backfillAcker.Store(startBackfillAcker(gs.omFrontend, backfill, assignment))
 	gs.log("start polling with acknowledge backfill")
 }
 
 func (gs *GameServer) StopBackfill() error {
-	if w := gs.backfillWorker.Load(); w != nil {
+	if w := gs.backfillAcker.Load(); w != nil {
 		w.Stop()
 	}
 	return nil
@@ -120,13 +126,13 @@ func (gs *GameServer) log(format string, args ...interface{}) {
 	gs.logger.Printf(format, args...)
 }
 
-type backfillWorker struct {
+type backfillAcker struct {
 	backfill   *pb.Backfill
 	omFrontend pb.FrontendServiceClient
 	stop       context.CancelFunc
 }
 
-func startBackfillWorker(omFrontend pb.FrontendServiceClient, backfill *pb.Backfill, assignment *pb.Assignment) *backfillWorker {
+func startBackfillAcker(omFrontend pb.FrontendServiceClient, backfill *pb.Backfill, assignment *pb.Assignment) *backfillAcker {
 	ctx, stop := context.WithCancel(context.Background())
 	go func() {
 		ticker := time.NewTicker(acknowledgeBackfillInterval)
@@ -148,14 +154,14 @@ func startBackfillWorker(omFrontend pb.FrontendServiceClient, backfill *pb.Backf
 			}
 		}
 	}()
-	return &backfillWorker{
+	return &backfillAcker{
 		backfill:   backfill,
 		omFrontend: omFrontend,
 		stop:       stop,
 	}
 }
 
-func (b *backfillWorker) Stop() {
+func (b *backfillAcker) Stop() {
 	b.stop()
 	_, _ = b.omFrontend.DeleteBackfill(context.Background(), &pb.DeleteBackfillRequest{
 		BackfillId: b.backfill.Id,

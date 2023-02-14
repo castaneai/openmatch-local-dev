@@ -32,38 +32,31 @@ func (d *Director) FetchMatches(ctx context.Context, profile *pb.MatchProfile, m
 	return matches, nil
 }
 
-type AssignResult struct {
-	AllocatedServer  *GameServer
-	AssignmentGroups []*pb.AssignmentGroup
-}
-
-func (d *Director) AssignTickets(ctx context.Context, matches []*pb.Match) (*AssignResult, error) {
-	var gs *GameServer
+func (d *Director) AssignTickets(ctx context.Context, matches []*pb.Match) ([]*pb.AssignmentGroup, error) {
 	var asgs []*pb.AssignmentGroup
 	for _, match := range matches {
 		// https://github.com/googleforgames/open-match/issues/1240#issuecomment-769898964
-		if match.Backfill == nil {
-			gs = AllocateGameServer(d.omFrontend)
-			asgs = append(asgs, &pb.AssignmentGroup{
-				TicketIds: ticketIDs(match),
-				Assignment: &pb.Assignment{
-					Connection: string(gs.ConnectionName()),
-				},
-			})
-		} else if match.AllocateGameserver {
-			gs = AllocateGameServer(d.omFrontend)
-			gs.StartBackfillCreated(match.Backfill, &pb.Assignment{
+		if match.AllocateGameserver {
+			gs := allocateGameServer(d.omFrontend)
+			as := &pb.Assignment{
 				Connection: string(gs.ConnectionName()),
+			}
+			asgs = append(asgs, &pb.AssignmentGroup{
+				TicketIds:  ticketIDs(match),
+				Assignment: as,
 			})
+			if match.Backfill != nil {
+				gs.StartBackfill(match.Backfill, as)
+			}
+		} else {
+			// AssignTickets does nothing;
+			// wait for the Assignment to be conveyed by AcknowledgeBackfill.
 		}
 	}
 	if _, err := d.omBackend.AssignTickets(ctx, &pb.AssignTicketsRequest{Assignments: asgs}); err != nil {
 		return nil, fmt.Errorf("failed to assign tickets: %w", err)
 	}
-	return &AssignResult{
-		AllocatedServer:  gs,
-		AssignmentGroups: asgs,
-	}, nil
+	return asgs, nil
 }
 
 func ticketIDs(match *pb.Match) []string {

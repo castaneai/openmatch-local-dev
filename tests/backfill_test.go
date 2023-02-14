@@ -38,13 +38,13 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-1), openSlots)
 
-		res, err := director.AssignTickets(ctx, matches)
+		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
-		assert.NotNil(t, res.AllocatedServer)
-		allocatedGameServer = res.AllocatedServer
-		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment = mustAssignment(t, frontend, ticket1.Id, 3*time.Second)
+		gs, ok := getGameServer(GameServerConnectionName(assignment.Connection))
+		assert.True(t, ok)
+		allocatedGameServer = gs
 		assert.NoError(t, allocatedGameServer.ConnectPlayer(ctx, ticket1.Id))
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
 	}
@@ -61,10 +61,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-2), openSlots)
 
-		res, err := director.AssignTickets(ctx, matches)
+		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
-		assert.Nil(t, res.AllocatedServer)
-		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket2.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -84,10 +82,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-3), openSlots)
 
-		res, err := director.AssignTickets(ctx, matches)
+		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
-		assert.Nil(t, res.AllocatedServer)
-		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket3.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
@@ -97,7 +93,9 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	assert.NoError(t, allocatedGameServer.StopBackfill())
 	assert.NoError(t, allocatedGameServer.DisconnectPlayer(ctx, ticket1.Id))
-	assert.NoError(t, allocatedGameServer.StartBackfill(ctx, assignment, 1))
+	bf, err := allocatedGameServer.CreateBackfill(ctx, assignment, 1)
+	assert.NoError(t, err)
+	allocatedGameServer.StartBackfill(bf, assignment)
 
 	ticket4 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
@@ -111,10 +109,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-3), openSlots)
 
-		res, err := director.AssignTickets(ctx, matches)
+		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
-		assert.Nil(t, res.AllocatedServer)
-		assert.Len(t, res.AssignmentGroups, 0)
 
 		assignment := mustAssignment(t, frontend, ticket4.Id, 3*time.Second)
 		assert.Equal(t, string(allocatedGameServer.ConnectionName()), assignment.Connection)
