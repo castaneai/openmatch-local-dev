@@ -16,6 +16,9 @@ delete:
 monitor-redis:
 	kubectl exec -n open-match open-match-redis-master-0 -- redis-cli monitor | grep -v 'ping\|PING\|PUBLISH\|INFO'
 
+clear-redis:
+	kubectl exec -n open-match open-match-redis-master-0 -- redis-cli flushall
+
 log-matchfunction:
 	kubectl logs -f -n default matchfunction
 

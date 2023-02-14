@@ -2,9 +2,12 @@ package tests
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
+	"github.com/castaneai/openmatch-local-dev/omutils"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"open-match.dev/open-match/pkg/pb"
 )
@@ -19,7 +22,8 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 	}
 
 	profile := &pb.MatchProfile{Name: "test-profile", Pools: []*pb.Pool{
-		newPool("test-pool"),
+		// Create a unique pool name for each test to avoid mixing with tickets created during previous tests.
+		newPool(fmt.Sprintf("test-pool-%s", uuid.Must(uuid.NewRandom()))),
 	}}
 
 	var allocatedGameServer *GameServer
@@ -34,9 +38,9 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.Len(t, matches[0].Tickets, 1)
 		assert.Equal(t, ticket1.Id, matches[0].Tickets[0].Id)
 		assert.NotNil(t, matches[0].Backfill)
-		openSlots, err := getOpenSlots(matches[0].Backfill)
+		openSlots, err := omutils.GetOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-1), openSlots)
+		assert.Equal(t, int32(omutils.PlayersPerMatch-1), openSlots)
 
 		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
@@ -57,9 +61,9 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
 		assert.NotNil(t, matches[0].Backfill)
-		openSlots, err := getOpenSlots(matches[0].Backfill)
+		openSlots, err := omutils.GetOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-2), openSlots)
+		assert.Equal(t, int32(omutils.PlayersPerMatch-2), openSlots)
 
 		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
@@ -78,9 +82,9 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
 		assert.NotNil(t, matches[0].Backfill)
-		openSlots, err := getOpenSlots(matches[0].Backfill)
+		openSlots, err := omutils.GetOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-3), openSlots)
+		assert.Equal(t, int32(omutils.PlayersPerMatch-3), openSlots)
 
 		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
@@ -93,7 +97,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	assert.NoError(t, allocatedGameServer.StopBackfill())
 	assert.NoError(t, allocatedGameServer.DisconnectPlayer(ctx, ticket1.Id))
-	bf, err := allocatedGameServer.CreateBackfill(ctx, assignment, 1)
+	bf, err := allocatedGameServer.CreateBackfill(ctx, 1)
 	assert.NoError(t, err)
 	allocatedGameServer.StartBackfill(bf, assignment)
 
@@ -105,9 +109,9 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.Equal(t, false, matches[0].AllocateGameserver)
 		assert.Len(t, matches[0].Tickets, 1)
 		assert.NotNil(t, matches[0].Backfill)
-		openSlots, err := getOpenSlots(matches[0].Backfill)
+		openSlots, err := omutils.GetOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
-		assert.Equal(t, int32(playersPerMatch-3), openSlots)
+		assert.Equal(t, int32(omutils.PlayersPerMatch-3), openSlots)
 
 		_, err = director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)

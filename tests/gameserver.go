@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/castaneai/openmatch-local-dev/omutils"
 	"github.com/google/uuid"
 	"open-match.dev/open-match/pkg/pb"
 )
@@ -73,7 +74,7 @@ func (gs *GameServer) ConnectPlayer(ctx context.Context, ticketID string) error 
 	}
 
 	newPlayerCount := len(gs.players) + 1
-	if newPlayerCount > playersPerMatch {
+	if newPlayerCount > omutils.PlayersPerMatch {
 		return ErrGameServerCapacityExceeded
 	}
 	gs.players[ticketID] = struct{}{}
@@ -95,9 +96,9 @@ func (gs *GameServer) DisconnectPlayer(ctx context.Context, ticketID string) err
 	return nil
 }
 
-func (gs *GameServer) CreateBackfill(ctx context.Context, assignment *pb.Assignment, openSlots int) (*pb.Backfill, error) {
+func (gs *GameServer) CreateBackfill(ctx context.Context, openSlots int) (*pb.Backfill, error) {
 	req := &pb.Backfill{}
-	if err := setOpenSlots(req, int32(openSlots)); err != nil {
+	if err := omutils.SetOpenSlots(req, int32(openSlots)); err != nil {
 		return nil, err
 	}
 	backfill, err := gs.omFrontend.CreateBackfill(ctx, &pb.CreateBackfillRequest{Backfill: req})

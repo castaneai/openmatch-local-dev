@@ -5,20 +5,13 @@ import (
 	"log"
 	"net"
 
+	"github.com/castaneai/openmatch-local-dev/omutils"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/any"
-	"github.com/golang/protobuf/ptypes/wrappers"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
-)
-
-const (
-	playersPerMatch = 3
-	openSlotsKey    = "openSlots"
 )
 
 func main() {
@@ -131,10 +124,10 @@ func makeMatches(profile *pb.MatchProfile, poolTickets map[string][]*pb.Ticket, 
 
 func makeFullMatches(profile *pb.MatchProfile, tickets []*pb.Ticket) ([]*pb.Match, []*pb.Ticket) {
 	var matches []*pb.Match
-	for len(tickets) >= playersPerMatch {
-		match := newMatch(profile, tickets[:playersPerMatch], nil)
+	for len(tickets) >= omutils.PlayersPerMatch {
+		match := newMatch(profile, tickets[:omutils.PlayersPerMatch], nil)
 		match.AllocateGameserver = true
-		tickets = tickets[playersPerMatch:]
+		tickets = tickets[omutils.PlayersPerMatch:]
 		matches = append(matches, match)
 	}
 	return matches, tickets
@@ -144,7 +137,7 @@ func handleBackfills(profile *pb.MatchProfile, tickets []*pb.Ticket, backfills [
 	var matches []*pb.Match
 
 	for _, backfill := range backfills {
-		openSlots, err := getOpenSlots(backfill)
+		openSlots, err := omutils.GetOpenSlots(backfill)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -157,7 +150,7 @@ func handleBackfills(profile *pb.MatchProfile, tickets []*pb.Ticket, backfills [
 		}
 
 		if len(matchTickets) > 0 {
-			if err := setOpenSlots(backfill, openSlots); err != nil {
+			if err := omutils.SetOpenSlots(backfill, openSlots); err != nil {
 				return nil, nil, err
 			}
 			matches = append(matches, newMatch(profile, matchTickets, backfill))
@@ -170,10 +163,10 @@ func makeMatchWithBackfill(profile *pb.MatchProfile, tickets []*pb.Ticket) (*pb.
 	if len(tickets) == 0 {
 		return nil, fmt.Errorf("tickets are required")
 	}
-	if len(tickets) > playersPerMatch {
+	if len(tickets) > omutils.PlayersPerMatch {
 		return nil, fmt.Errorf("too many tickets")
 	}
-	backfill, err := newBackfill(newSearchFields(), playersPerMatch-len(tickets))
+	backfill, err := newBackfill(newSearchFields(), omutils.PlayersPerMatch-len(tickets))
 	if err != nil {
 		return nil, err
 	}
@@ -202,39 +195,8 @@ func newBackfill(searchFields *pb.SearchFields, openSlots int) (*pb.Backfill, er
 		CreateTime:   timestamppb.Now(),
 		Generation:   0,
 	}
-	if err := setOpenSlots(b, int32(openSlots)); err != nil {
+	if err := omutils.SetOpenSlots(b, int32(openSlots)); err != nil {
 		return nil, err
 	}
 	return b, nil
-}
-
-func setOpenSlots(b *pb.Backfill, val int32) error {
-	if b.Extensions == nil {
-		b.Extensions = make(map[string]*any.Any)
-	}
-	any, err := ptypes.MarshalAny(&wrappers.Int32Value{Value: val})
-	if err != nil {
-		return err
-	}
-	b.Extensions[openSlotsKey] = any
-	return nil
-}
-
-func getOpenSlots(b *pb.Backfill) (int32, error) {
-	if b == nil {
-		return 0, fmt.Errorf("expected backfill is not nil")
-	}
-	if b.Extensions != nil {
-		if any, ok := b.Extensions[openSlotsKey]; ok {
-			var val wrappers.Int32Value
-			err := ptypes.UnmarshalAny(any, &val)
-			if err != nil {
-				return 0, err
-			}
-
-			return val.Value, nil
-		}
-	}
-	// defaults to zero
-	return 0, nil
 }

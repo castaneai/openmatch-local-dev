@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
-	"google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/grpc/credentials/insecure"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -28,7 +28,7 @@ var mfConfig = &pb.FunctionConfig{
 }
 
 func newOMFrontendClient(t *testing.T) pb.FrontendServiceClient {
-	cc, err := grpc.Dial(frontendAddr, grpc.WithInsecure())
+	cc, err := grpc.Dial(frontendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func newOMFrontendClient(t *testing.T) pb.FrontendServiceClient {
 }
 
 func newOMBackendClient(t *testing.T) pb.BackendServiceClient {
-	cc, err := grpc.Dial(backendAddr, grpc.WithInsecure())
+	cc, err := grpc.Dial(backendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,8 +45,7 @@ func newOMBackendClient(t *testing.T) pb.BackendServiceClient {
 
 func newPool(name string) *pb.Pool {
 	return &pb.Pool{
-		Name:         name,
-		CreatedAfter: timestamppb.New(time.Now().Add(-1000 * time.Millisecond)),
+		Name: name,
 	}
 }
 
