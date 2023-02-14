@@ -2,8 +2,6 @@ package tests
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -23,7 +21,6 @@ const (
 	backendAddr  = "localhost:50505"
 )
 
-var errAssignmentTimeout = errors.New("wait assignment timeout")
 var mfConfig = &pb.FunctionConfig{
 	Host: matchFunctionHost,
 	Port: matchFunctionPort,
@@ -74,36 +71,17 @@ func mustAssignment(t *testing.T, fe pb.FrontendServiceClient, ticketID string, 
 }
 
 func waitForAssignment(fe pb.FrontendServiceClient, ticketID string, timeout time.Duration) (*pb.Assignment, error) {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
 	stream, err := fe.WatchAssignments(ctx, &pb.WatchAssignmentsRequest{TicketId: ticketID})
 	if err != nil {
 		return nil, err
 	}
-
-	resch := make(chan struct {
-		resp *pb.WatchAssignmentsResponse
-		err  error
-	})
-	go func() {
-		for {
-			resp, err := stream.Recv()
-			resch <- struct {
-				resp *pb.WatchAssignmentsResponse
-				err  error
-			}{resp: resp, err: err}
-		}
-	}()
 	for {
-		select {
-		case res := <-resch:
-			if res.err != nil {
-				return nil, fmt.Errorf("failed to recv stream on watch assignment: %+v", res.err)
-			}
-			if res.resp.Assignment != nil {
-				return res.resp.Assignment, nil
-			}
-		case <-time.After(timeout):
-			return nil, errAssignmentTimeout
+		resp, err := stream.Recv()
+		if err != nil {
+			return nil, err
 		}
+		return resp.Assignment, nil
 	}
 }

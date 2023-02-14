@@ -24,7 +24,6 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 
 	var allocatedGameServer *GameServer
 	var assignment *pb.Assignment
-	var currentBackfill *pb.Backfill
 
 	ticket1 := mustCreateTicket(t, frontend, &pb.Ticket{})
 	{
@@ -38,7 +37,6 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		openSlots, err := getOpenSlots(matches[0].Backfill)
 		assert.NoError(t, err)
 		assert.Equal(t, int32(playersPerMatch-1), openSlots)
-		currentBackfill = matches[0].Backfill
 
 		res, err := director.AssignTickets(ctx, matches)
 		assert.NoError(t, err)
@@ -97,7 +95,7 @@ func TestCreateTicketWithBackfill(t *testing.T) {
 		assert.NoError(t, allocatedGameServer.ConnectPlayer(ctx, ticket3.Id))
 	}
 
-	assert.NoError(t, allocatedGameServer.StopBackfill(ctx, currentBackfill.Id))
+	assert.NoError(t, allocatedGameServer.StopBackfill())
 	assert.NoError(t, allocatedGameServer.DisconnectPlayer(ctx, ticket1.Id))
 	assert.NoError(t, allocatedGameServer.StartBackfill(ctx, assignment, 1))
 
