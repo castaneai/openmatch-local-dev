@@ -7,7 +7,7 @@ build:
         main: ./matchfunction
         dependencies:
           paths: ["**/*.go"]
-          ignore: ["tests/**/*.go"]
+          ignore: ["tests/**/*.go", "cmd/**/*.go"]
 deploy:
   kubectl:
     defaultNamespace: open-match
