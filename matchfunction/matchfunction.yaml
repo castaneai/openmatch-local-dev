@@ -1,17 +1,26 @@
-kind: Pod
-apiVersion: v1
+kind: Deployment
+apiVersion: apps/v1
 metadata:
   name: matchfunction
   labels:
     component: matchfunction
 spec:
-  containers:
-    - name: matchfunction
-      image: omdemo/matchfunction
-      imagePullPolicy: IfNotPresent
-      ports:
-        - name: grpc
-          containerPort: 50502
+  replicas: 1
+  selector:
+    matchLabels:
+      component: matchfunction
+  template:
+    metadata:
+      labels:
+        component: matchfunction
+    spec:
+      containers:
+        - name: matchfunction
+          image: omdemo/matchfunction
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: grpc
+              containerPort: 50502
 ---
 kind: Service
 apiVersion: v1

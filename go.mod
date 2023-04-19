@@ -3,16 +3,17 @@ module github.com/castaneai/openmatch-local-dev
 go 1.19
 
 require (
+	github.com/castaneai/omtools v0.0.0-20230419091957-dada78a3fda1
 	github.com/davecgh/go-spew v1.1.1
 	github.com/google/uuid v1.3.0
 	github.com/stretchr/testify v1.8.1
+	golang.org/x/sync v0.1.0
 	google.golang.org/grpc v1.54.0
 	google.golang.org/protobuf v1.30.0
 	open-match.dev/open-match v1.7.0
 )
 
 require (
-	github.com/castaneai/omtools v0.0.0-20230419091957-dada78a3fda1 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2 // indirect
 	github.com/kr/text v0.1.0 // indirect
