@@ -8,12 +8,19 @@ build:
         dependencies:
           paths: ["**/*.go"]
           ignore: ["tests/**/*.go", "cmd/**/*.go"]
+    - image: omdemo/testdirector
+      ko:
+        main: ./cmd/testdirector
+        dependencies:
+          paths: ["**/*.go"]
+          ignore: ["tests/**/*.go"]
 deploy:
   kubectl:
     defaultNamespace: open-match
 manifests:
   rawYaml:
     - ./matchfunction/matchfunction.yaml
+    - ./cmd/testdirector/testdirector.yaml
 portForward:
   - resourceType: Service
     resourceName: open-match-frontend

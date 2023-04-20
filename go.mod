@@ -14,10 +14,14 @@ require (
 )
 
 require (
+	github.com/bojand/hri v1.1.0 // indirect
+	github.com/go-chi/chi/v5 v5.0.7 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2 // indirect
 	github.com/kr/text v0.1.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/rantav/go-grpc-channelz v0.0.3 // indirect
 	github.com/sethvargo/go-retry v0.2.4 // indirect
 	golang.org/x/exp v0.0.0-20230418202329-0354be287a23 // indirect
 	golang.org/x/net v0.9.0 // indirect

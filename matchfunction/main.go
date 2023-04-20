@@ -6,9 +6,9 @@ import (
 	"net"
 
 	"github.com/castaneai/openmatch-local-dev/omutils"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"open-match.dev/open-match/pkg/matchfunction"
 	"open-match.dev/open-match/pkg/pb"
@@ -47,7 +47,6 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 	for _, pool := range request.Profile.Pools {
 		poolNames = append(poolNames, pool.Name)
 	}
-	log.Printf("start query pools (profile: %s, pools: %v)", request.Profile.Name, poolNames)
 
 	poolTickets, err := matchfunction.QueryPools(stream.Context(), s.qsc, request.Profile.Pools)
 	if err != nil {
@@ -60,11 +59,11 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 		return err
 	}
 	for poolName, tickets := range poolTickets {
-		log.Printf("pool: %s, tickets: %s", poolName, spew.Sdump(tickets))
+		if len(tickets) > 0 {
+			log.Printf("pool: %s, tickets: %s", poolName, ticketIDs(tickets))
+		}
 	}
-	for poolName, backfills := range poolBackfills {
-		log.Printf("pool: %s, backfills: %s", poolName, spew.Sdump(backfills))
-	}
+
 	matches, err := makeMatches(request.Profile, poolTickets, poolBackfills)
 	if err != nil {
 		log.Printf("failed to make matches: %+v", err)
@@ -75,17 +74,27 @@ func (s *matchFunctionService) Run(request *pb.RunRequest, stream pb.MatchFuncti
 			log.Printf("failed to send match proposal: %+v", err)
 			return err
 		}
-		log.Printf("sent match proposal: %s", spew.Sdump(match))
+	}
+	if len(matches) > 0 {
+		log.Printf("sent %d match proposal(s)", len(matches))
 	}
 	return nil
 }
 
 func newQueryServiceClient(addr string) (pb.QueryServiceClient, error) {
-	cc, err := grpc.Dial(addr, grpc.WithInsecure())
+	cc, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, err
 	}
 	return pb.NewQueryServiceClient(cc), nil
+}
+
+func ticketIDs(ts []*pb.Ticket) []string {
+	var tids []string
+	for _, t := range ts {
+		tids = append(tids, t.Id)
+	}
+	return tids
 }
 
 func makeMatches(profile *pb.MatchProfile, poolTickets map[string][]*pb.Ticket, poolBackfills map[string][]*pb.Backfill) ([]*pb.Match, error) {

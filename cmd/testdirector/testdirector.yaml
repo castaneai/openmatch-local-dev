@@ -1,0 +1,20 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: testdirector
+  labels:
+    component: director
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: director
+  template:
+    metadata:
+      labels:
+        component: director
+    spec:
+      containers:
+        - name: director
+          image: omdemo/testdirector
+          imagePullPolicy: IfNotPresent

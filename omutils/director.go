@@ -2,9 +2,10 @@ package omutils
 
 import (
 	"context"
+	"log"
 
+	"github.com/bojand/hri"
 	"github.com/castaneai/omtools"
-	"github.com/google/uuid"
 	"open-match.dev/open-match/pkg/pb"
 )
 
@@ -29,9 +30,12 @@ func (f assignFunc) Assign(ctx context.Context, matches []*pb.Match) ([]*pb.Assi
 func dummyAssign(ctx context.Context, matches []*pb.Match) ([]*pb.AssignmentGroup, error) {
 	var asgs []*pb.AssignmentGroup
 	for _, match := range matches {
+		tids := ticketIDs(match)
+		conn := hri.Random()
+		log.Printf("assign '%s' to tickets: %v", conn, tids)
 		asgs = append(asgs, &pb.AssignmentGroup{
-			TicketIds:  ticketIDs(match),
-			Assignment: &pb.Assignment{Connection: uuid.Must(uuid.NewRandom()).String()},
+			TicketIds:  tids,
+			Assignment: &pb.Assignment{Connection: conn},
 		})
 	}
 	return asgs, nil

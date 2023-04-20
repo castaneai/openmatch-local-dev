@@ -26,9 +26,11 @@ var matchProfile = &pb.MatchProfile{
 func main() {
 	var rps float64
 	var frontendAddr, backendAddr string
+	var builtinDirector bool
 	flag.Float64Var(&rps, "rps", 1.0, "RPS (request per second)")
 	flag.StringVar(&frontendAddr, "frontend", "localhost:50504", "An address of Open Match frontend")
 	flag.StringVar(&backendAddr, "backend", "localhost:50505", "An address of Open Match backend")
+	flag.BoolVar(&builtinDirector, "builtin-director", true, "Enabling built-in director")
 	flag.Parse()
 
 	log.Printf("open match load-testing (rps: %.2f, frontend addr: %s)", rps, frontendAddr)
@@ -36,16 +38,22 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	director, err := omutils.NewTestDirector(backendAddr, matchProfile)
-	if err != nil {
-		log.Fatalf("failed to new test director: %+v", err)
+	if builtinDirector {
+		director, err := omutils.NewTestDirector(backendAddr, matchProfile)
+		if err != nil {
+			log.Fatalf("failed to new test director: %+v", err)
+		}
+		go func() {
+			if err := director.Run(ctx, 2*time.Second); err != nil {
+				log.Printf("failed to run director: %+v", err)
+			}
+		}()
 	}
-	directorErr := make(chan error)
-	go func() {
-		directorErr <- director.Run(ctx, 500*time.Millisecond)
-	}()
 
 	omFrontend, err := omutils.NewOMFrontendClient(frontendAddr)
+	if err != nil {
+		log.Fatalf("failed to new om frontend client: %+v", err)
+	}
 	tick := time.Duration(1.0 / rps * float64(time.Second))
 	ticker := time.NewTicker(tick)
 	defer ticker.Stop()
@@ -63,9 +71,6 @@ func main() {
 			}
 			log.Printf("ticket created: %s", ticket.Id)
 			go watchTickets(ctx, omFrontend, ticket)
-		case err := <-directorErr:
-			log.Printf("director stopped with error: %+v", err)
-			return
 		}
 	}
 }
