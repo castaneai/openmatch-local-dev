@@ -25,11 +25,12 @@ var matchProfile = &pb.MatchProfile{
 
 func main() {
 	var rps float64
-	var frontendAddr, backendAddr string
+	var frontendAddr, backendAddr, matchFunction string
 	var builtinDirector bool
 	flag.Float64Var(&rps, "rps", 1.0, "RPS (request per second)")
 	flag.StringVar(&frontendAddr, "frontend", "localhost:50504", "An address of Open Match frontend")
 	flag.StringVar(&backendAddr, "backend", "localhost:50505", "An address of Open Match backend")
+	flag.StringVar(&matchFunction, "matchfunction", "matchfunction-simple1vs1", "An name of Match Function")
 	flag.BoolVar(&builtinDirector, "builtin-director", true, "Enabling built-in director")
 	flag.Parse()
 
@@ -39,7 +40,7 @@ func main() {
 	defer cancel()
 
 	if builtinDirector {
-		director, err := omutils.NewTestDirector(backendAddr, matchProfile)
+		director, err := omutils.NewTestDirector(backendAddr, matchProfile, matchFunction)
 		if err != nil {
 			log.Fatalf("failed to new test director: %+v", err)
 		}

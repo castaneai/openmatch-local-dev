@@ -2,6 +2,7 @@ package omutils
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/bojand/hri"
@@ -9,13 +10,13 @@ import (
 	"open-match.dev/open-match/pkg/pb"
 )
 
-func NewTestDirector(backendAddr string, profile *pb.MatchProfile) (*omtools.Director, error) {
+func NewTestDirector(backendAddr string, profile *pb.MatchProfile, matchfunction string) (*omtools.Director, error) {
 	backend, err := NewOMBackendClient(backendAddr)
 	if err != nil {
 		return nil, err
 	}
 	return omtools.NewDirector(backend, profile, &pb.FunctionConfig{
-		Host: "matchfunction.open-match.svc.cluster.local.",
+		Host: fmt.Sprintf("%s.open-match.svc.cluster.local.", matchfunction),
 		Port: 50502,
 		Type: pb.FunctionConfig_GRPC,
 	}, assignFunc(dummyAssign)), nil

@@ -15,6 +15,6 @@ spec:
         component: director
     spec:
       containers:
-        - name: director
+        - name: testdirector
           image: omdemo/testdirector
           imagePullPolicy: IfNotPresent

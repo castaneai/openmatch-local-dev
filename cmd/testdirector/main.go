@@ -21,8 +21,9 @@ var matchProfile = &pb.MatchProfile{
 
 func main() {
 	backendAddr := "open-match-backend.open-match.svc.cluster.local.:50505"
-	log.Printf("start testdirector (backend: %s, profile: %s)", backendAddr, matchProfile.Name)
-	d, err := omutils.NewTestDirector(backendAddr, matchProfile)
+	matchFunction := "matchfunction-simple1vs1"
+	log.Printf("start testdirector (backend: %s, profile: %s, matchFunction: %s)", backendAddr, matchProfile.Name, matchFunction)
+	d, err := omutils.NewTestDirector(backendAddr, matchProfile, matchFunction)
 	if err != nil {
 		log.Fatal(err)
 	}

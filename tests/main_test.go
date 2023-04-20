@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	// see ../matchfunction/main.go
+	// see ../matchfunction
 	// see also https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#a-aaaa-records
-	matchFunctionHost = "matchfunction.open-match.svc.cluster.local."
+	matchFunctionHost = "matchfunction-backfill3.open-match.svc.cluster.local."
 	matchFunctionPort = 50502
 
 	// See portForward section in skaffold.yaml

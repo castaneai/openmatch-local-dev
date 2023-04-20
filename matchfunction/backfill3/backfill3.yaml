@@ -1,0 +1,36 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: matchfunction-backfill3
+  labels:
+    component: matchfunction-backfill3
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: matchfunction-backfill3
+  template:
+    metadata:
+      labels:
+        component: matchfunction-backfill3
+    spec:
+      containers:
+        - name: matchfunction-backfill3
+          image: omdemo/matchfunction/backfill3
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: grpc
+              containerPort: 50502
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: matchfunction-backfill3
+  labels:
+    component: matchfunction-backfill3
+spec:
+  selector:
+    component: matchfunction-backfill3
+  clusterIP: None
+  type: ClusterIP
+---

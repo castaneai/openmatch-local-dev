@@ -1,22 +1,22 @@
 kind: Deployment
 apiVersion: apps/v1
 metadata:
-  name: matchfunction
+  name: matchfunction-simple1vs1
   labels:
-    component: matchfunction
+    component: matchfunction-simple1vs1
 spec:
   replicas: 1
   selector:
     matchLabels:
-      component: matchfunction
+      component: matchfunction-simple1vs1
   template:
     metadata:
       labels:
-        component: matchfunction
+        component: matchfunction-simple1vs1
     spec:
       containers:
-        - name: matchfunction
-          image: omdemo/matchfunction
+        - name: matchfunction-simple1vs1
+          image: omdemo/matchfunction/simple1vs1
           imagePullPolicy: IfNotPresent
           ports:
             - name: grpc
@@ -25,12 +25,12 @@ spec:
 kind: Service
 apiVersion: v1
 metadata:
-  name: matchfunction
+  name: matchfunction-simple1vs1
   labels:
-    component: matchfunction
+    component: matchfunction-simple1vs1
 spec:
   selector:
-    component: matchfunction
+    component: matchfunction-simple1vs1
   clusterIP: None
   type: ClusterIP
 ---

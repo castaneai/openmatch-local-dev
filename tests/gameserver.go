@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	acknowledgeBackfillInterval = 10 * time.Millisecond
+	acknowledgeBackfillInterval = 100 * time.Millisecond
 )
 
 var (
